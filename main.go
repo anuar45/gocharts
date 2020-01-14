@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +12,19 @@ const (
 	githubAPI     = "api.github.com"
 	searchRepoURI = "/search/repositories?q="
 )
+
+type GithubRepos struct {
+	TotalCount int          `json:"total_count"`
+	Repos      []GithubRepo `json:"items"`
+	Incomplete bool         `json:"incomplete_results"`
+}
+
+type GithubRepo struct {
+	//ID int `json:"id"`
+	Fork bool   `json:"fork"`
+	Url  string `json:"url"`
+	Desc string `json:"description"`
+}
 
 func main() {
 	u := url.URL{}
@@ -24,7 +38,7 @@ func main() {
 
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", githubAPI, nil)
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		log.Fatal("Cant intitialize request:", err)
 	}
@@ -35,5 +49,12 @@ func main() {
 		log.Fatal("Error making sending request:", err)
 	}
 
+	var g GithubRepos
+
+	err = json.NewDecoder(resp.Body).Decode(&g)
+	if err != nil {
+		log.Fatal("Error unmarshaling", err)
+	}
 	fmt.Println(resp)
+	fmt.Println(g)
 }
