@@ -8,42 +8,41 @@ import (
 	"net/url"
 )
 
-const (
-	githubAPI     = "api.github.com"
-	searchRepoURI = "/search/repositories?q="
-)
-
-type GithubRepos struct {
+// GithubRepos is github repositories root
+type GithubRepoSearchResult struct {
 	TotalCount int          `json:"total_count"`
 	Repos      []GithubRepo `json:"items"`
 	Incomplete bool         `json:"incomplete_results"`
 }
 
+// GithubRepo is github repository
 type GithubRepo struct {
 	//ID int `json:"id"`
 	Fork bool   `json:"fork"`
-	Url  string `json:"url"`
+	URL  string `json:"url"`
 	Desc string `json:"description"`
 }
 
+// GithubItem is github content item
 type GithubItem struct {
 	Name string `json:"name"`
-	Url  string `json:"url"`
+	URL  string `json:"url"`
 }
 
 func main() {
-	goRepos := GetGoGithubRepos()
-	fmt.Println(goRepos)
+	result := SearchGithubRepos("go")
+	fmt.Println(result)
 }
 
-func GetGoGithubRepos() GithubRepos {
-	var g GithubRepos
+// SearchGithubRepos searches for repos with specific lang
+func SearchGithubRepos(lang string) []GithubRepo {
+	var g GithubRepoSearchResult
 	u := url.URL{}
 	u.Scheme = "https"
 	u.Host = "api.github.com"
 	u.Path = "/search/repositories"
 	q := u.Query()
-	q.Set("q", "language:go")
+	q.Set("q", "language:"+lang)
 	u.RawQuery = q.Encode()
 	//fmt.Println(u)
 
@@ -57,7 +56,7 @@ func GetGoGithubRepos() GithubRepos {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("Error making sending request:", err)
+		log.Fatal("Error sending request:", err)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&g)
