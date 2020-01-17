@@ -26,7 +26,18 @@ type GithubRepo struct {
 	Desc string `json:"description"`
 }
 
+type GithubItem struct {
+	Name string `json:"name"`
+	Url  string `json:"url"`
+}
+
 func main() {
+	goRepos := GetGoGithubRepos()
+	fmt.Println(goRepos)
+}
+
+func GetGoGithubRepos() GithubRepos {
+	var g GithubRepos
 	u := url.URL{}
 	u.Scheme = "https"
 	u.Host = "api.github.com"
@@ -34,7 +45,7 @@ func main() {
 	q := u.Query()
 	q.Set("q", "language:go")
 	u.RawQuery = q.Encode()
-	fmt.Println(u)
+	//fmt.Println(u)
 
 	client := &http.Client{}
 
@@ -49,12 +60,9 @@ func main() {
 		log.Fatal("Error making sending request:", err)
 	}
 
-	var g GithubRepos
-
 	err = json.NewDecoder(resp.Body).Decode(&g)
 	if err != nil {
 		log.Fatal("Error unmarshaling", err)
 	}
-	fmt.Println(resp)
-	fmt.Println(g)
+	return g
 }
