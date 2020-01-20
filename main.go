@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 )
 
 // GithubRepos is github repositories root
@@ -36,7 +38,7 @@ func main() {
 
 // SearchGithubRepos searches for repos with specific lang
 func SearchGithubRepos(lang string) []GithubRepo {
-	var g GithubRepoSearchResult
+	var g []GithubRepo
 	u := url.URL{}
 	u.Scheme = "https"
 	u.Host = "api.github.com"
@@ -64,4 +66,21 @@ func SearchGithubRepos(lang string) []GithubRepo {
 		log.Fatal("Error unmarshaling", err)
 	}
 	return g
+}
+
+func ParseLinkHeader(s string) map[string]string {
+	links := make(map[string]string)
+
+	sl := strings.Split(s, ",")
+
+	urlRe := regexp.MustCompile("<(.*)>")
+	relRe := regexp.MustCompile("rel=\"(.*)\"")
+	for _, line := range sl {
+		uri := urlRe.FindStringSubmatch(line)
+		rel := relRe.FindStringSubmatch(line)
+		if len(uri) == 2 && len(rel) == 2 {
+			links[rel[1]] = uri[1]
+		}
+	}
+	return links
 }
