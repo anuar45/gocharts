@@ -8,3 +8,11 @@ Accept: application/vnd.github.VERSION.raw
 ###
 GET https://api.github.com/repositories HTTP/1.1
 Accept: application/vnd.github.VERSION.raw
+
+###
+GET https://raw.githubusercontent.com/kubernetes/kubernetes/master/go.mod HTTP/1.1
+Accept: application/vnd.github.VERSION.raw
+
+###
+GET https://api.github.com/repos/kubernetes/kubernetes/contents/go.mod HTTP/1.1
+Accept: application/vnd.github.VERSION.raw
