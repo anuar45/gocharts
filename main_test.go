@@ -27,6 +27,16 @@ replace (
 }
 `
 
+var goRepo = GithubRepo{
+	ID:           20580498,
+	FullName:     "kubernetes/kubernetes",
+	IsFork:       false,
+	RepoURL:      "https://api.github.com/repos/kubernetes/kubernetes",
+	Desc:         "Production-Grade Container Scheduling and Management",
+	LanguagesURL: "https://api.github.com/repos/kubernetes/kubernetes/languages",
+	ContentsURL:  "https://api.github.com/repos/kubernetes/kubernetes/contents/{+path}",
+}
+
 func TestParseLinkHeader(t *testing.T) {
 	testcase := struct {
 		in   string

@@ -17,47 +17,23 @@ import (
 
 var mu = &sync.Mutex{}
 
+const SearchURL = "https://api.github.com/search/repositories?q=language:go"
+
+type GithubRepoSearch struct {
+	Repos []GithubRepo `json:"items"`
+}
+
 // GithubRepo is github repository
 type GithubRepo struct {
 	ID           int    `json:"id"`
 	Name         string `json:"name"`
+	FullName     string `json:"full_name"`
 	IsFork       bool   `json:"fork"`
-	URL          string `json:"url"`
+	RepoURL      string `json:"url"`
 	Desc         string `json:"description"`
 	LanguagesURL string `json:"languages_url"`
 	ContentsURL  string `json:"contents_url"`
 	GoImports    []string
-}
-
-func (g *GithubRepo) IsGo() bool {
-	var result bool
-
-	var langs map[string]int
-
-	rb, _ := GetRequestWithLimit(g.LanguagesURL)
-
-	err := json.Unmarshal(rb, &langs)
-	if err != nil {
-		return false
-	}
-
-	if _, ok := langs["Go"]; ok {
-		result = true
-	}
-
-	return result
-
-}
-
-func (g *GithubRepo) GetImports() {
-
-	gomodURL := strings.Replace(g.ContentsURL, "{+path}", "go.mod", 1)
-
-	gomodData, _ := GetRequestWithLimit(gomodURL)
-
-	if len(gomodData) > 0 {
-		g.GoImports = ParseGomodFile(gomodData)
-	}
 }
 
 func main() {
@@ -75,28 +51,37 @@ func main() {
 func GetGithubGoRepos() []GithubRepo {
 	var goRepos []GithubRepo
 
-	nextURL := "https://api.github.com/repositories"
+	nextURL := SearchURL
 
 	for {
-		var repos []GithubRepo
+		var goReposSearch GithubRepoSearch
 
-		rb, lm := GetRequestWithLimit(nextURL)
+		rb, links := GetRequestWithLimit(nextURL)
 
-		err := json.Unmarshal(rb, &repos)
+		err := json.Unmarshal(rb, &goReposSearch)
 		if err != nil {
 			log.Fatal("Error unmarshaling", err)
 		}
 
+		repos := goReposSearch.Repos
+
 		for _, repo := range repos {
-			fmt.Println("Processing:", repo.URL)
-			if repo.IsGo() && !repo.IsFork {
-				repo.GetImports()
-				fmt.Println("Go repo! Imports from gomod:\n", strings.Join(repo.GoImports, "\n"))
+			fmt.Println("Processing:", repo.RepoURL)
+			if !repo.IsFork && repo.FullName != "golang/go" {
+				gomodURL := strings.Replace(repo.ContentsURL, "{+path}", "go.mod", 1)
+				fmt.Println("GO mod file url:", gomodURL)
+				gomodData, _ := GetRequestWithLimit(gomodURL)
+
+				if len(gomodData) > 0 {
+					repo.GoImports = ParseGomodFile(gomodData)
+				}
+
+				fmt.Println("Imports from gomod:\n", strings.Join(repo.GoImports, "\n"))
 				goRepos = append(goRepos, repo)
 			}
 		}
 
-		if val, ok := lm["since"]; ok {
+		if val, ok := links["next"]; ok {
 			nextURL = val
 		} else {
 			break
@@ -111,8 +96,8 @@ func ParseLinkHeader(s string) map[string]string {
 
 	sl := strings.Split(s, ",")
 
-	urlRe := regexp.MustCompile("<(.*)>")
-	relRe := regexp.MustCompile("rel=\"(.*)\"")
+	urlRe := regexp.MustCompile(`<(.*)>`)
+	relRe := regexp.MustCompile(`rel=\"(.*)\"`)
 	for _, line := range sl {
 		uri := urlRe.FindStringSubmatch(line)
 		rel := relRe.FindStringSubmatch(line)
@@ -128,14 +113,20 @@ func GetRequestWithLimit(u string) ([]byte, map[string]string) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
 		log.Fatal("Cant intitialize request:", err)
 	}
-	req.Header.Add("Accept", "application/vnd.github.mercy-preview+json")
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		log.Fatal("No token in GITHUB_TOKEN env")
+	}
+
+	req.Header.Add("Authorization", "token "+token)
+	req.Header.Add("Accept", "application/vnd.github.VERSION.raw")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -146,9 +137,9 @@ func GetRequestWithLimit(u string) ([]byte, map[string]string) {
 
 	rb, _ := ioutil.ReadAll(resp.Body)
 	lh := resp.Header.Get("Link")
-	lm := ParseLinkHeader(lh)
+	links := ParseLinkHeader(lh)
 
-	return rb, lm
+	return rb, links
 }
 
 // ParseGomodFile get imports from gomod file
@@ -158,26 +149,32 @@ func ParseGomodFile(b []byte) []string {
 	bs := bytes.Split(b, []byte("\n"))
 
 	reStart := regexp.MustCompile(`^require \($`)
-	reEnd := regexp.MustCompile(`^\}$`)
+	reEnd := regexp.MustCompile(`\}`)
 	reImport := regexp.MustCompile(`^(.*)\sv`)
 	reIndirect := regexp.MustCompile(`indirect`)
 
-loop:
+	var requireBlock bool
+
 	for i := 0; i < len(bs); i++ {
 		if reStart.Match(bs[i]) {
-			for {
-				i++
-				importMatch := reImport.FindSubmatch(bytes.TrimSpace(bs[i]))
-				if len(importMatch) == 2 && !reIndirect.Match(bs[i]) {
-					goimports = append(goimports, string(importMatch[1]))
-				}
+			requireBlock = true
+		}
+		if requireBlock {
+			importMatch := reImport.FindSubmatch(bytes.TrimSpace(bs[i]))
+			if len(importMatch) == 2 && !reIndirect.Match(bs[i]) {
+				goimports = append(goimports, string(importMatch[1]))
+			}
 
-				if reEnd.Match(bs[i]) {
-					break loop
-				}
+			if reEnd.Match(bs[i]) {
+				break
 			}
 		}
 	}
 
 	return goimports
+}
+
+func SaveRepo(g GithubRepo) error {
+	// TODO: Implement DB save
+	return nil
 }

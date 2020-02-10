@@ -2,6 +2,10 @@ GET https://api.github.com/search/repositories?q=language:go&page=34 HTTP/1.1
 Accept: application/vnd.github.mercy-preview+json
 
 ###
+GET https://api.github.com/search/repositories?q=language:go HTTP/1.1
+Accept: application/vnd.github.VERSION.raw
+
+###
 GET https://api.github.com/repos/kubernetes/kubernetes/contents HTTP/1.1
 Accept: application/vnd.github.VERSION.raw
 
@@ -16,3 +20,15 @@ Accept: application/vnd.github.VERSION.raw
 ###
 GET https://api.github.com/repos/kubernetes/kubernetes/contents/go.mod HTTP/1.1
 Accept: application/vnd.github.VERSION.raw
+
+###
+GET https://api.github.com/repos/kubernetes/kubernetes HTTP/1.1
+Accept: application/vnd.github.VERSION.raw
+
+###
+GET https://api.github.com/repos/kubernetes/kubernetes/languages HTTP/1.1
+Accept: application/vnd.github.VERSION.raw
+
+###
+GET https://api.github.com/search/repositories?q=filename:go.mod HTTP/1.1
+Accept: application/vnd.github.mercy-preview+json
