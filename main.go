@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -18,23 +19,6 @@ import (
 var mu = &sync.Mutex{}
 
 const SearchURL = "https://api.github.com/search/repositories?q=language:go"
-
-type GithubRepoSearch struct {
-	Repos []GithubRepo `json:"items"`
-}
-
-// GithubRepo is github repository
-type GithubRepo struct {
-	ID           int    `json:"id"`
-	Name         string `json:"name"`
-	FullName     string `json:"full_name"`
-	IsFork       bool   `json:"fork"`
-	RepoURL      string `json:"url"`
-	Desc         string `json:"description"`
-	LanguagesURL string `json:"languages_url"`
-	ContentsURL  string `json:"contents_url"`
-	GoImports    []string
-}
 
 func main() {
 	result := GetGithubGoRepos()
@@ -174,7 +158,22 @@ func ParseGomodFile(b []byte) []string {
 	return goimports
 }
 
-func SaveRepo(g GithubRepo) error {
-	// TODO: Implement DB save
-	return nil
+func GetGoImports(gr []GithubRepo) []GoImport {
+	var goimports []GoImport
+	goimportsMap := make(map[string]int)
+	for _, repo := range gr {
+		for _, goimport := range repo.GoImports {
+			goimportsMap[goimport]++
+		}
+	}
+
+	for goimport, count := range goimportsMap {
+		goimports = append(goimports, GoImport{goimport, count})
+	}
+
+	sort.Slice(goimports, func(i, j int) bool {
+		return goimports[i].Count > goimports[j].Count
+	})
+
+	return goimports
 }
