@@ -6,6 +6,10 @@ type Database interface {
 
 type MapDB map[string]GithubRepo
 
+func NewMapDB() MapDB {
+	return make(MapDB)
+}
+
 func (db MapDB) Save(g GithubRepo) {
 	db[g.FullName] = g
 }
