@@ -158,7 +158,7 @@ func ParseGomodFile(b []byte) []string {
 	return goimports
 }
 
-func GetGoImports(gr []GithubRepo) []GoImport {
+func ExtractGoImports(gr []GithubRepo) []GoImport {
 	var goimports []GoImport
 	goimportsMap := make(map[string]int)
 	for _, repo := range gr {

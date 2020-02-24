@@ -1,15 +1,46 @@
 package main
 
-type Database interface {
+type GithubRepoDatabase interface {
 	Save(g GithubRepo)
+	GetAll() []GithubRepo
 }
 
-type MapDB map[string]GithubRepo
-
-func NewMapDB() MapDB {
-	return make(MapDB)
+type GoImportDatabase interface {
+	Save(g GoImport)
+	GetAll() []GoImport
 }
 
-func (db MapDB) Save(g GithubRepo) {
+type GithubRepoDB map[string]GithubRepo
+type GoImportDB map[string]GoImport
+
+func NewGoImportDB() GoImportDB {
+	return make(GoImportDB)
+}
+
+func NewGithubRepoDB() GithubRepoDB {
+	return make(GithubRepoDB)
+}
+
+func (db GoImportDB) Save(g GoImport) {
+	db[g.URL] = g
+}
+
+func (db GoImportDB) GetAll() []GoImport {
+	var g []GoImport
+	for _, v := range db {
+		g = append(g, v)
+	}
+	return g
+}
+
+func (db GithubRepoDB) Save(g GithubRepo) {
 	db[g.FullName] = g
+}
+
+func (db GithubRepoDB) GetAll() []GithubRepo {
+	var g []GithubRepo
+	for _, v := range db {
+		g = append(g, v)
+	}
+	return g
 }
