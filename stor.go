@@ -1,7 +1,7 @@
 package main
 
 type GithubRepoDatabase interface {
-	Save(g GithubRepo)
+	SaveAll(g GithubRepo)
 	GetAll() []GithubRepo
 }
 
@@ -21,8 +21,10 @@ func NewGithubRepoDB() GithubRepoDB {
 	return make(GithubRepoDB)
 }
 
-func (db GoImportDB) Save(g GoImport) {
-	db[g.URL] = g
+func (db GoImportDB) SaveAll(gis []GoImport) {
+	for _, v := range gis {
+		db[v.URL] = v
+	}
 }
 
 func (db GoImportDB) GetAll() []GoImport {
@@ -33,8 +35,10 @@ func (db GoImportDB) GetAll() []GoImport {
 	return g
 }
 
-func (db GithubRepoDB) Save(g GithubRepo) {
-	db[g.FullName] = g
+func (db GithubRepoDB) SaveAll(grs []GithubRepo) {
+	for _, v := range grs {
+		db[v.FullName] = v
+	}
 }
 
 func (db GithubRepoDB) GetAll() []GithubRepo {

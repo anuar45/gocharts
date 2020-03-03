@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,12 +22,26 @@ var mu = &sync.Mutex{}
 const SearchURL = "https://api.github.com/search/repositories?q=language:go"
 
 func main() {
-	result := GetGithubGoRepos()
-	fmt.Println(len(result))
+
+	grDB := NewGithubRepoDB()
+
+	grs := GetGithubGoRepos()
+
+	grDB.SaveAll(grs)
+
+	gis := ExtractGoImports(grs)
+
+	giDB := NewGoImportDB()
+
+	giDB.SaveAll(gis)
+
+	gis = giDB.GetAll()
+
 	f, _ := os.Create("data.out")
 	bw := bufio.NewWriter(f)
-	for _, repo := range result {
-		bw.WriteString(strings.Join([]string{repo.Name, strings.Join(repo.GoImports, ":"), "\n"}, "\t"))
+	for i, v := range gis {
+		s := strconv.Itoa(i) + v.URL + v.Count
+		bw.WriteString(s)
 	}
 	bw.Flush()
 }
