@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+</head>
+
+<h1>Top Golang modules</h1>
+
+<form action="/update/github" method="post">
+    <input type="submit" value="Update">
+</form>
+
+<table>
+    <tr>
+      <th>Module Name</th>
+      <th>Import Count</th>
+    </tr>
+
+    {{ range . }} 
+    <tr>
+      <td>{{ .URL }}</td>
+      <td>{{ .Count }}</td>
+    </tr>
+    {{ end }}
+</table> 
