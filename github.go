@@ -3,13 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -19,10 +19,22 @@ var mu = &sync.Mutex{}
 
 const SearchURL = "https://api.github.com/search/repositories?q=language:go"
 
-// GetGithubGoRepos searches for repos with specific lang
-func GetGithubGoRepos() []GithubRepo {
-	var goRepos []GithubRepo
+func (g *GoImportService) Fetch() error {
+	if g.IsBusy {
+		return errors.New("Fetch already in progress...")
+	}
+	go func() {
+		g.IsBusy = true
+		g.fetch()
+		g.IsBusy = false
+	}()
+	return nil
+}
 
+// Fetch calculates go mod imports statistics
+func (g *GoImportService) fetch() error {
+
+	countImports := make(map[string]int)
 	nextURL := SearchURL
 
 	for {
@@ -38,18 +50,28 @@ func GetGithubGoRepos() []GithubRepo {
 		repos := goReposSearch.Repos
 
 		for _, repo := range repos {
-			fmt.Println("Processing:", repo.RepoURL)
 			if !repo.IsFork && repo.FullName != "golang/go" {
+				fmt.Println("Processing:", repo.RepoURL)
+				g.GrsRepo.Save(repo)
+
 				gomodURL := strings.Replace(repo.ContentsURL, "{+path}", "go.mod", 1)
 				fmt.Println("GO mod file url:", gomodURL)
 				gomodData, _ := GetRequestWithLimit(gomodURL)
 
 				if len(gomodData) > 0 {
-					repo.GoImports = ParseGomodFile(gomodData)
+
+					goImports := ParseGomodFile(gomodData)
+					repo.GoImports = goImports
+
+					for _, goImport := range goImports {
+						countImports[goImport]++
+					}
 				}
 
 				fmt.Println("Imports from gomod:\n", strings.Join(repo.GoImports, "\n"))
-				goRepos = append(goRepos, repo)
+				for k, v := range countImports {
+					g.GisRepo.Save(GoImport{k, v})
+				}
 			}
 		}
 
@@ -59,7 +81,8 @@ func GetGithubGoRepos() []GithubRepo {
 			break
 		}
 	}
-	return goRepos
+
+	return nil
 }
 
 // ParseLinkHeader gets reference links from headers
@@ -142,26 +165,6 @@ func ParseGomodFile(b []byte) []string {
 			}
 		}
 	}
-
-	return goimports
-}
-
-func ExtractGoImports(grs []GithubRepo) []GoImport {
-	var goimports []GoImport
-	goimportsMap := make(map[string]int)
-	for _, repo := range grs {
-		for _, goimport := range repo.GoImports {
-			goimportsMap[goimport]++
-		}
-	}
-
-	for goimport, count := range goimportsMap {
-		goimports = append(goimports, GoImport{goimport, count})
-	}
-
-	sort.Slice(goimports, func(i, j int) bool {
-		return goimports[i].Count > goimports[j].Count
-	})
 
 	return goimports
 }

@@ -1,5 +1,6 @@
 package main
 
+// Just for parsing search response
 type GithubRepoSearch struct {
 	Repos []GithubRepo `json:"items"`
 }
@@ -17,6 +18,7 @@ type GithubRepo struct {
 	GoImports    []string
 }
 
+// Count package imports
 type GoImport struct {
 	URL   string
 	Count int

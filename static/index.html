@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"> 
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <title>Top Golang Modules</title>
+</head>
+
+<body>
+  <div id="app">
+
+    <h1>Top Golang modules</h1>
+
+    <button type="button" @click="getImports">Refresh</button>
+    <button type="button" @click="postUpdate">Update</button>
+
+
+    <table>
+      <tr>
+        <th>Module Name</th>
+        <th>Import Count</th>
+      </tr>
+      <tr v-for="package in packages">
+        <td>{{ package.URL }}</td>
+        <td>{{ package.Count }}</td>
+      </tr>
+    </table>
+  </div>
+  
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        packages: [],
+        api: {
+          update: "/api/update",
+          imports: "/api/imports"
+        }
+      },
+      methods: {
+        getImports(){
+          axios.get(this.api.imports).then((response) => {
+            this.packages = response.data;
+          })
+        },
+        postUpdate(){
+          axios.post(this.api.update)
+        }
+      }
+    })
+  </script>
+</body>
+</html>

@@ -2,19 +2,14 @@ package main
 
 func main() {
 
-	grsDB := NewGithubRepoDB()
+	githubRepoDB := NewGithubRepoDB()
 
-	gisDB := NewGoImportDB()
+	goImportDB := NewGoImportDB()
 
-	srv := NewWebServer(gisDB, grsDB)
+	goImportService := NewGoImportService(githubRepoDB, goImportDB)
 
-	srv.Run()
+	apiServer := NewApiServer(goImportService)
 
-	// f, _ := os.Create("data.out")
-	// bw := bufio.NewWriter(f)
-	// for i, v := range gis {
-	// 	s := strconv.Itoa(i) + "  " + v.URL + "  " + strconv.Itoa(v.Count) + "\n"
-	// 	bw.WriteString(s)
-	// }
-	// bw.Flush()
+	apiServer.Run()
+
 }
