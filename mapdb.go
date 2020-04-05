@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sort"
 	"sync"
 )
 
@@ -39,6 +40,8 @@ func (db GoImportDB) FindAll() ([]GoImport, error) {
 	for _, v := range db.mapdb {
 		g = append(g, v)
 	}
+
+	sort.Slice(g, func(i, j int) bool { return g[i].Count > g[j].Count })
 	return g, nil
 }
 
@@ -53,5 +56,6 @@ func (db GithubRepoDB) FindAll() []GithubRepo {
 	for _, v := range db.mapdb {
 		g = append(g, v)
 	}
+
 	return g
 }

@@ -46,7 +46,7 @@ func (s *ApiServer) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 func (s *ApiServer) Run() {
 
 	http.HandleFunc("/", s.HomeHandler)
-	http.HandleFunc("/api/update", s.UpdateHandler)
+	http.HandleFunc("/api/fetch", s.UpdateHandler)
 	http.HandleFunc("/api/imports", s.ImportsHandler)
 
 	http.ListenAndServe(":8080", nil)
