@@ -20,7 +20,7 @@ FROM alpine
 RUN apk update && apk add --no-cache ca-certificates
 
 COPY --from=builder /go/bin/gocharts /go/bin/gocharts
-COPY --from=builder /go/src/gocharts/static /go/bin/gocharts/
+COPY --from=builder /go/src/gocharts/static /go/bin/
 
 WORKDIR /go/bin
 
