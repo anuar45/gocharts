@@ -31,9 +31,9 @@ jobs:
     - name: Build
       run: go build -v .
 
-    - name: Publish to Registry
-      uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: anuar45/gocharts
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}    
+    # - name: Publish to Registry
+    #   uses: elgohr/Publish-Docker-Github-Action@master
+    #   with:
+    #     name: anuar45/gocharts
+    #     username: ${{ secrets.DOCKER_USERNAME }}
+    #     password: ${{ secrets.DOCKER_PASSWORD }}    
