@@ -24,6 +24,6 @@ COPY --from=builder /go/src/gocharts/static /go/bin/
 
 WORKDIR /go/bin
 
-EXPOSE 80/tcp
+EXPOSE 8080/tcp
 
 ENTRYPOINT ["./gocharts"]
