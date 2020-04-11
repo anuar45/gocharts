@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -17,7 +18,10 @@ type ApiServer struct {
 
 func (s *ApiServer) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
-	index, _ := ioutil.ReadFile("static/index.html")
+	index, err := ioutil.ReadFile("static/index.html")
+	if err != nil {
+		log.Println("cant read home page:", err)
+	}
 
 	fmt.Fprintf(w, string(index))
 }
