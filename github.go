@@ -117,7 +117,8 @@ func GetRequestWithLimit(u string) ([]byte, map[string]string) {
 	}
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
-		log.Fatal("No token in GITHUB_TOKEN env")
+		log.Println("No token in GITHUB_TOKEN env")
+		return nil, nil
 	}
 
 	req.Header.Add("Authorization", "token "+token)
