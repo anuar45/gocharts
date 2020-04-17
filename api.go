@@ -43,11 +43,17 @@ func (s *ApiServer) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *ApiServer) VersionHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "{version: %s}", VERSION)
+}
+
 func (s *ApiServer) Run() {
 
 	http.HandleFunc("/", s.HomeHandler)
 	http.HandleFunc("/api/fetch", s.UpdateHandler)
 	http.HandleFunc("/api/imports", s.ImportsHandler)
+
+	http.HandleFunc("/api/version", s.VersionHandler)
 
 	http.ListenAndServe(":8080", nil)
 
