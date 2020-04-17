@@ -44,7 +44,8 @@
         packages: [],
         api: {
           fetch: "/api/fetch",
-          imports: "/api/imports"
+          imports: "/api/imports",
+          version: "/api/version"
         }
       },
       methods: {
@@ -55,6 +56,9 @@
         },
         postUpdate(){
           axios.post(this.api.fetch)
+        },
+        getVersion(){
+          axios.get(this.api.version)
         }
       }
     })
