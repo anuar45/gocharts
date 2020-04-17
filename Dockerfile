@@ -10,8 +10,9 @@ COPY . .
 
 RUN go get -d -v
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/topgomods . 
+RUN GIT_TAG=$(git describe --tags)
 
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.VERSION=$GIT_TAG" -o /go/bin/topgomods . 
 
 ### Image Build stage
 

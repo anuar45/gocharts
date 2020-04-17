@@ -1,5 +1,7 @@
 package main
 
+var VERSION string
+
 func main() {
 
 	githubRepoDB := NewGithubRepoDB()
