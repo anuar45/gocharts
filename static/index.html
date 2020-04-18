@@ -48,6 +48,9 @@
           version: "/api/version"
         }
       },
+      created: function () {
+        this.getImports()
+      },
       methods: {
         getImports(){
           axios.get(this.api.imports).then((response) => {
