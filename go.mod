@@ -1,4 +1,4 @@
-module github.com/anuar45/gocharts
+module github.com/anuar45/topgomods
 
 go 1.13
 
