@@ -10,9 +10,7 @@ COPY . .
 
 RUN go get -d -v
 
-RUN GIT_TAG=$(git describe --tags)
-
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.VERSION=$GIT_TAG" -o /go/bin/topgomods . 
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.VERSION=$(git describe --tags)" -o /go/bin/topgomods . 
 
 ### Image Build stage
 
@@ -21,7 +19,7 @@ FROM alpine
 RUN apk update && apk add --no-cache ca-certificates
 
 COPY --from=builder /go/bin/topgomods /go/bin/topgomods
-COPY --from=builder /go/src/topgomods/static /go/bin/
+COPY --from=builder /go/src/topgomods/static /go/bin/static/
 
 WORKDIR /go/bin
 
