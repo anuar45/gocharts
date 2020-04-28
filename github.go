@@ -151,7 +151,9 @@ func ParseGomodFile(b []byte) ([]string, error) {
 	}
 
 	for _, req := range goModFile.Require {
-		modReq = append(modReq, req.Syntax.Token[0])
+		if !strings.Contains(req.Syntax.Token[0], "golang.org") { //filtering golang std packages
+			modReq = append(modReq, req.Syntax.Token[0])
+		}
 	}
 
 	return modReq, nil
