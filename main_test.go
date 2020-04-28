@@ -18,13 +18,13 @@ go 1.13
 require (
 	bitbucket.org/bertimus9/systemstat v0.0.0-20180207000608-0eeff89b0690
 	github.com/Rican7/retry v0.1.0 // indirect
+)
 
-}
 
 replace (
 	bitbucket.org/bertimus9/systemstat => bitbucket.org/bertimus9/systemstat v0.0.0-20180207000608-0eeff89b0690
 	cloud.google.com/go => cloud.google.com/go v0.38.0
-}
+)
 `
 
 var goRepo = GithubRepo{
@@ -56,8 +56,12 @@ func TestParseLinkHeader(t *testing.T) {
 func TestParseGomod(t *testing.T) {
 	want := []string{
 		"bitbucket.org/bertimus9/systemstat",
+		"github.com/Rican7/retry",
 	}
-	got := ParseGomodFile([]byte(gomodFile))
+	got, err := ParseGomodFile([]byte(gomodFile))
+	if err != nil {
+		t.Error(err)
+	}
 
 	assert.Equal(t, want, got, "Should be equal")
 

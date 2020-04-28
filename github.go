@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/mod/modfile"
 )
 
 var mu = &sync.Mutex{}
@@ -60,7 +61,10 @@ func (g *GoImportService) fetch() error {
 
 				if len(gomodData) > 0 {
 
-					goImports := ParseGomodFile(gomodData)
+					goImports, err := ParseGomodFile(gomodData)
+					if err != nil {
+						log.Println(err)
+					}
 					repo.GoImports = goImports
 
 					for _, goImport := range goImports {
@@ -138,33 +142,17 @@ func GetRequestWithLimit(u string) ([]byte, map[string]string) {
 }
 
 // ParseGomodFile get imports from gomod file
-func ParseGomodFile(b []byte) []string {
-	var goimports []string
+func ParseGomodFile(b []byte) ([]string, error) {
+	var modReq []string
 
-	bs := bytes.Split(b, []byte("\n"))
-
-	reStart := regexp.MustCompile(`^require \($`)
-	reEnd := regexp.MustCompile(`\}`)
-	reImport := regexp.MustCompile(`^(.*)\sv`)
-	reIndirect := regexp.MustCompile(`indirect`)
-
-	var requireBlock bool
-
-	for i := 0; i < len(bs); i++ {
-		if reStart.Match(bs[i]) {
-			requireBlock = true
-		}
-		if requireBlock {
-			importMatch := reImport.FindSubmatch(bytes.TrimSpace(bs[i]))
-			if len(importMatch) == 2 && !reIndirect.Match(bs[i]) {
-				goimports = append(goimports, string(importMatch[1]))
-			}
-
-			if reEnd.Match(bs[i]) {
-				break
-			}
-		}
+	goModFile, err := modfile.Parse("", b, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	return goimports
+	for _, req := range goModFile.Require {
+		modReq = append(modReq, req.Syntax.Token[0])
+	}
+
+	return modReq, nil
 }
