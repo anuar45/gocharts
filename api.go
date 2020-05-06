@@ -8,12 +8,12 @@ import (
 	"net/http"
 )
 
-func NewApiServer(g GoImportServicer) *ApiServer {
+func NewApiServer(g GoModuleServicer) *ApiServer {
 	return &ApiServer{g}
 }
 
 type ApiServer struct {
-	giService GoImportServicer
+	gmService GoModuleServicer
 }
 
 func (s *ApiServer) HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,19 +26,19 @@ func (s *ApiServer) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, string(index))
 }
 
-func (s *ApiServer) ImportsHandler(w http.ResponseWriter, r *http.Request) {
-	gis, err := s.giService.FindAll()
+func (s *ApiServer) ModulesHandler(w http.ResponseWriter, r *http.Request) {
+	moduleRanks, err := s.gmService.TopModules()
 	if err != nil {
-		log.Println("imports hadler error:", err)
+		log.Println("modules hadler error:", err)
 	}
 
-	json.NewEncoder(w).Encode(gis)
+	json.NewEncoder(w).Encode(moduleRanks)
 }
 
 func (s *ApiServer) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 
-		err := s.giService.Fetch()
+		err := s.gmService.Fetch()
 		if err != nil {
 			//fmt.Fprint(w, err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -58,7 +58,7 @@ func (s *ApiServer) Run() {
 
 	http.HandleFunc("/", s.HomeHandler)
 	http.HandleFunc("/api/fetch", s.UpdateHandler)
-	http.HandleFunc("/api/imports", s.ImportsHandler)
+	http.HandleFunc("/api/modules", s.ModulesHandler)
 
 	http.HandleFunc("/api/version", s.VersionHandler)
 

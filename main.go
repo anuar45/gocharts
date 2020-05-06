@@ -4,13 +4,13 @@ var VERSION string
 
 func main() {
 
-	githubRepoDB := NewGithubRepoDB()
+	goRepoDB := NewGoRepoDB()
 
-	goImportDB := NewGoImportDB()
+	goModuleDB := NewGoModuleDB()
 
-	goImportService := NewGoImportService(githubRepoDB, goImportDB)
+	goModuleService := NewGoModuleService(goRepoDB, goModuleDB)
 
-	apiServer := NewApiServer(goImportService)
+	apiServer := NewApiServer(goModuleService)
 
 	apiServer.Run()
 

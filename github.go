@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,17 +11,32 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/mod/modfile"
 )
+
+// GithubRepoSearch is search response from github
+type GithubRepoSearch struct {
+	Repos []GithubRepo `json:"items"`
+}
+
+// GithubRepo is github repository
+type GithubRepo struct {
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	FullName     string `json:"full_name"`
+	IsFork       bool   `json:"fork"`
+	RepoURL      string `json:"url"`
+	Desc         string `json:"description"`
+	LanguagesURL string `json:"languages_url"`
+	ContentsURL  string `json:"contents_url"`
+}
 
 var mu = &sync.Mutex{}
 
-const SearchURL = "https://api.github.com/search/repositories?q=language:go"
+const searchURL = "https://api.github.com/search/repositories?q=language:go"
 
-func (g *GoImportService) Fetch() error {
+func (g *GoModuleService) Fetch() error {
 	if g.IsBusy {
-		return errors.New("Fetch already in progress...")
+		return errors.New("fetch already in progress")
 	}
 	go func() {
 		g.IsBusy = true
@@ -32,11 +46,8 @@ func (g *GoImportService) Fetch() error {
 	return nil
 }
 
-// Fetch calculates go mod imports statistics
-func (g *GoImportService) fetch() error {
-
-	countImports := make(map[string]int)
-	nextURL := SearchURL
+func (g *GoModuleService) fetch() error {
+	nextURL := searchURL
 
 	for {
 		var goReposSearch GithubRepoSearch
@@ -52,30 +63,19 @@ func (g *GoImportService) fetch() error {
 
 		for _, repo := range repos {
 			if !repo.IsFork && repo.FullName != "golang/go" {
-				fmt.Println("Processing:", repo.RepoURL)
-				g.GrsRepo.Save(repo)
+				log.Println("Processing:", repo.RepoURL)
 
 				gomodURL := strings.Replace(repo.ContentsURL, "{+path}", "go.mod", 1)
-				fmt.Println("GO mod file url:", gomodURL)
+				log.Println("GO mod file url:", gomodURL)
 				gomodData, _ := GetRequestWithLimit(gomodURL)
 
+				var goModules []GoModule
 				if len(gomodData) > 0 {
-
-					goImports, err := ParseGomodFile(gomodData)
-					if err != nil {
-						log.Println(err)
-					}
-					repo.GoImports = goImports
-
-					for _, goImport := range goImports {
-						countImports[goImport]++
-					}
+					goModules, _ = ParseGomodFile(gomodData)
 				}
 
-				fmt.Println("Imports from gomod:\n", strings.Join(repo.GoImports, "\n"))
-				for k, v := range countImports {
-					g.GisRepo.Save(GoImport{k, v})
-				}
+				g.GrsRepo.Save(GoRepo{repo.Name, repo.RepoURL, goModules})
+				log.Println("Modules:\n", goModules)
 			}
 		}
 
@@ -139,22 +139,4 @@ func GetRequestWithLimit(u string) ([]byte, map[string]string) {
 	links := ParseLinkHeader(lh)
 
 	return rb, links
-}
-
-// ParseGomodFile get imports from gomod file
-func ParseGomodFile(b []byte) ([]string, error) {
-	var modReq []string
-
-	goModFile, err := modfile.Parse("", b, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, req := range goModFile.Require {
-		if !strings.Contains(req.Syntax.Token[0], "golang.org") { //filtering golang std packages
-			modReq = append(modReq, req.Syntax.Token[0])
-		}
-	}
-
-	return modReq, nil
 }
