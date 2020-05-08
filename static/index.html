@@ -3,24 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.1/build/pure-min.css" integrity="sha384-oAOxQR6DkCoMliIh8yFnu25d7Eq/PHS21PClpwjOTeU2jRSq11vu66rf90/cZr47" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
   <title>Top Golang Modules</title>
 </head>
 
 <body>
   <div id="app">
 
-    <div class="pure-menu pure-menu-horizontal">
-      <a href="#" class="pure-menu-heading pure-menu-link">GO Modules</a>
-      <ul class="pure-menu-list">
-          <li class="pure-menu-item"><a href="#" class="pure-menu-link" @click="getImports">Refresh</a></li>
-          <li class="pure-menu-item"><a href="#" class="pure-menu-link" @click="postUpdate">Fetch</a></li>
-      </ul>
-    </div>
+    <nav class="navbar navbar-expand-lg">
+      <a href="#" class="navbar-brand">GO Modules {{ meta.version }}</a>
+      <div>
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit" @click="getImports">Refresh</button>
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit" @click="postUpdate">Fetch</button> 
+      </div>
+    </nav>
 
-    <table class="pure-table">
+    <table class="table table-striped">
       <thead>
         <tr>
           <th>Package Name</th>
@@ -41,15 +42,17 @@
     var app = new Vue({
       el: '#app',
       data: {
+        meta: {},
         packages: [],
         api: {
           fetch: "/api/fetch",
           imports: "/api/modules",
-          version: "/api/version"
+          meta: "/api/meta"
         }
       },
       created: function () {
-        this.getImports()
+        this.getImports(),
+        this.getVersion()
       },
       methods: {
         getImports(){
@@ -61,7 +64,9 @@
           axios.post(this.api.fetch)
         },
         getVersion(){
-          axios.get(this.api.version)
+          axios.get(this.api.meta).then((response) => {
+            this.meta = response.data;
+          })
         }
       }
     })

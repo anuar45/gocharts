@@ -50,8 +50,8 @@ func (s *ApiServer) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *ApiServer) VersionHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "{version: %s}", VERSION)
+func (s *ApiServer) MetaHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "{\"version\": \"%s\"}", VERSION)
 }
 
 func (s *ApiServer) Run() {
@@ -60,7 +60,7 @@ func (s *ApiServer) Run() {
 	http.HandleFunc("/api/fetch", s.UpdateHandler)
 	http.HandleFunc("/api/modules", s.ModulesHandler)
 
-	http.HandleFunc("/api/version", s.VersionHandler)
+	http.HandleFunc("/api/meta", s.MetaHandler)
 
 	http.ListenAndServe(":8080", nil)
 
