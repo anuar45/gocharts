@@ -54,7 +54,7 @@ func (g *GoModuleService) TopModules() ([]GoModuleRank, error) {
 	return moduleRanks, nil
 }
 
-// ParseGomodFile get imports from gomod file
+// ParseGomodFile get packages from gomod file
 func ParseGomodFile(b []byte) ([]GoModule, error) {
 	var modules []GoModule
 
