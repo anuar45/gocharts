@@ -3,14 +3,13 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
-	"os"
 	"regexp"
 	"strings"
-	"sync"
-	"time"
+
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
 
 // GithubRepoSearch is search response from github
@@ -30,33 +29,39 @@ type GithubRepo struct {
 	ContentsURL  string `json:"contents_url"`
 }
 
-var mu = &sync.Mutex{}
-
-const searchURL = "https://api.github.com/search/repositories?q=language:go"
-
-func (g *GoModuleService) Fetch() error {
-	if g.IsBusy {
-		return errors.New("fetch already in progress")
-	}
-	go func() {
-		g.IsBusy = true
-		g.fetch()
-		g.IsBusy = false
-	}()
-	return nil
+type Github struct {
+	Token     string
+	BaseURL   string
+	SearchURL string
+	RateLimit int
 }
 
-func (g *GoModuleService) fetch() error {
-	nextURL := searchURL
+func Init() *Github {
+	return &Github{
+		SearchURL: "https://api.github.com/search/repositories?q=language:go",
+	}
+}
+
+func (g *Github) Fetch() ([]GoRepo, error) {
+
+	goRepos, err := g.fetch()
+
+	return goRepos, err
+}
+
+func (g *Github) fetch() ([]GoRepo, error) {
+
+	var goRepos []GoRepo
+	nextURL := g.SearchURL
 
 	for {
 		var goReposSearch GithubRepoSearch
 
-		rb, links := GetRequestWithLimit(nextURL)
+		content, headers, _ := HttpGet(nextURL, g.Token)
 
-		err := json.Unmarshal(rb, &goReposSearch)
+		err := json.Unmarshal(content, &goReposSearch)
 		if err != nil {
-			log.Fatal("Error unmarshaling", err)
+			return nil, fmt.Errorf("error unmarshaling: %w", err)
 		}
 
 		repos := goReposSearch.Repos
@@ -67,17 +72,21 @@ func (g *GoModuleService) fetch() error {
 
 				gomodURL := strings.Replace(repo.ContentsURL, "{+path}", "go.mod", 1)
 				log.Println("GO mod file url:", gomodURL)
-				gomodData, _ := GetRequestWithLimit(gomodURL)
+				gomodContent, _, _ := HttpGet(gomodURL, g.Token)
 
 				var goModules []GoModule
-				if len(gomodData) > 0 {
-					goModules, _ = ParseGomodFile(gomodData)
+				if len(gomodContent) > 0 {
+					goModules, _ = ParseGomodFile(gomodContent)
 				}
 
-				g.GrsRepo.Save(GoRepo{repo.Name, repo.RepoURL, goModules})
+				goRepos = append(goRepos, GoRepo{repo.Name, repo.RepoURL, goModules})
 				log.Println("Modules:\n", goModules)
 			}
 		}
+
+		// TODO:
+		lh := headers["Link"]
+		links := ParseLinkHeader(lh[0])
 
 		if val, ok := links["next"]; ok {
 			nextURL = val
@@ -86,7 +95,7 @@ func (g *GoModuleService) fetch() error {
 		}
 	}
 
-	return nil
+	return goRepos, nil
 }
 
 // ParseLinkHeader gets reference links from headers
@@ -107,36 +116,36 @@ func ParseLinkHeader(s string) map[string]string {
 	return links
 }
 
-// GetRequestWithLimit is attemp to make simple rate limiter using sleep and mutex
-func GetRequestWithLimit(u string) ([]byte, map[string]string) {
-	mu.Lock()
-	defer mu.Unlock()
+// HttpGet makes retryable http get requests using 3rd lib
+func HttpGet(url, token string) ([]byte, map[string][]string, error) {
+	headers := make(map[string][]string)
 
-	time.Sleep(2 * time.Second)
+	client := retryablehttp.NewClient()
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", u, nil)
+	req, err := retryablehttp.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Fatal("Cant intitialize request:", err)
+		return nil, nil, fmt.Errorf("cant intitialize request: %w", err)
 	}
-	token := os.Getenv("GITHUB_TOKEN")
+
 	if token == "" {
-		log.Fatal("No token in GITHUB_TOKEN env")
+		return nil, nil, errors.New("No github token found")
 	}
 
 	req.Header.Add("Authorization", "token "+token)
-	req.Header.Add("Accept", "application/vnd.github.VERSION.raw")
 
 	resp, err := client.Do(req)
 	if err != nil {
 		resp.Body.Close()
-		log.Fatal("Error sending request:", err)
+		return nil, nil, fmt.Errorf("error sending request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	rb, _ := ioutil.ReadAll(resp.Body)
-	lh := resp.Header.Get("Link")
-	links := ParseLinkHeader(lh)
+	body, _ := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error reading response body: %w", err)
+	}
 
-	return rb, links
+	headers = resp.Header
+
+	return body, headers, nil
 }
