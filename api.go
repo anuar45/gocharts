@@ -1,4 +1,4 @@
-package main
+package topgomods
 
 import (
 	"encoding/json"

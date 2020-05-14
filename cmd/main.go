@@ -1,7 +1,5 @@
 package main
 
-var VERSION string
-
 func main() {
 
 	goRepoDB := NewGoRepoDB()

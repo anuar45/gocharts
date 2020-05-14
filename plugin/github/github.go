@@ -1,15 +1,14 @@
-package main
+package github
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"regexp"
 	"strings"
 
-	retryablehttp "github.com/hashicorp/go-retryablehttp"
+	"github.com/anuar45/topgomods"
+	"github.com/anuar45/topgomods/plugin"
 )
 
 // GithubRepoSearch is search response from github
@@ -29,6 +28,7 @@ type GithubRepo struct {
 	ContentsURL  string `json:"contents_url"`
 }
 
+// Github is github source of Go Repos
 type Github struct {
 	Token     string
 	BaseURL   string
@@ -36,28 +36,34 @@ type Github struct {
 	RateLimit int
 }
 
-func Init() *Github {
-	return &Github{
-		SearchURL: "https://api.github.com/search/repositories?q=language:go",
-	}
+// Init registers source plugin
+func Init() {
+	plugin.GoRepoSources["github"] = new(Github)
 }
 
-func (g *Github) Fetch() ([]GoRepo, error) {
+// Configure configures source plugin
+func (g *Github) Configure(cfg topgomods.Config) error {
+	// TODO: Parse config and take what needed, fail on missing
+	return nil
+}
+
+// Fetch source interface implmentation
+func (g *Github) Fetch() (topgomods.GoRepos, error) {
 
 	goRepos, err := g.fetch()
 
 	return goRepos, err
 }
 
-func (g *Github) fetch() ([]GoRepo, error) {
+func (g *Github) fetch() (topgomods.GoRepos, error) {
 
-	var goRepos []GoRepo
+	var goRepos topgomods.GoRepos
 	nextURL := g.SearchURL
 
 	for {
 		var goReposSearch GithubRepoSearch
 
-		content, headers, _ := HttpGet(nextURL, g.Token)
+		content, headers, _ := topgomods.HTTPGet(nextURL, g.Token)
 
 		err := json.Unmarshal(content, &goReposSearch)
 		if err != nil {
@@ -72,19 +78,18 @@ func (g *Github) fetch() ([]GoRepo, error) {
 
 				gomodURL := strings.Replace(repo.ContentsURL, "{+path}", "go.mod", 1)
 				log.Println("GO mod file url:", gomodURL)
-				gomodContent, _, _ := HttpGet(gomodURL, g.Token)
+				gomodContent, _, _ := topgomods.HTTPGet(gomodURL, g.Token)
 
-				var goModules []GoModule
+				var goModules []topgomods.GoModule
 				if len(gomodContent) > 0 {
-					goModules, _ = ParseGomodFile(gomodContent)
+					goModules, _ = topgomods.ParseGomodFile(gomodContent)
 				}
 
-				goRepos = append(goRepos, GoRepo{repo.Name, repo.RepoURL, goModules})
+				goRepos = append(goRepos, topgomods.GoRepo{repo.Name, repo.RepoURL, goModules})
 				log.Println("Modules:\n", goModules)
 			}
 		}
 
-		// TODO:
 		lh := headers["Link"]
 		links := ParseLinkHeader(lh[0])
 
@@ -114,38 +119,4 @@ func ParseLinkHeader(s string) map[string]string {
 		}
 	}
 	return links
-}
-
-// HttpGet makes retryable http get requests using 3rd lib
-func HttpGet(url, token string) ([]byte, map[string][]string, error) {
-	headers := make(map[string][]string)
-
-	client := retryablehttp.NewClient()
-
-	req, err := retryablehttp.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, nil, fmt.Errorf("cant intitialize request: %w", err)
-	}
-
-	if token == "" {
-		return nil, nil, errors.New("No github token found")
-	}
-
-	req.Header.Add("Authorization", "token "+token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		resp.Body.Close()
-		return nil, nil, fmt.Errorf("error sending request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error reading response body: %w", err)
-	}
-
-	headers = resp.Header
-
-	return body, headers, nil
 }

@@ -1,4 +1,4 @@
-package main
+package topgomods
 
 // GoRepo is golang project
 type GoRepo struct {
@@ -6,6 +6,9 @@ type GoRepo struct {
 	URL     string
 	Modules []GoModule
 }
+
+//GoRepos slice of GoRepo
+type GoRepos []GoRepo
 
 // GoModule is go pkg/lib
 type GoModule struct {

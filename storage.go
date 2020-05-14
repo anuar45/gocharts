@@ -1,4 +1,4 @@
-package main
+package topgomods
 
 type GoRepoRepository interface {
 	Save(g GoRepo)
