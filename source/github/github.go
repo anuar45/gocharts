@@ -2,13 +2,14 @@ package github
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/anuar45/topgomods"
-	"github.com/anuar45/topgomods/plugin"
 )
 
 // GithubRepoSearch is search response from github
@@ -38,12 +39,16 @@ type Github struct {
 
 // Init registers source plugin
 func Init() {
-	plugin.GoRepoSources["github"] = new(Github)
+	topgomods.GoRepoSources["github"] = new(Github)
 }
 
 // Configure configures source plugin
-func (g *Github) Configure(cfg topgomods.Config) error {
+func (g *Github) Configure(cfg string) error {
 	// TODO: Parse config and take what needed, fail on missing
+	g.Token = os.Getenv("GITHUB_TOKEN")
+	if g.Token == "" {
+		return errors.New("no github token configured")
+	}
 	return nil
 }
 

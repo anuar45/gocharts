@@ -27,31 +27,15 @@ replace (
 )
 `
 
-var goRepo = GithubRepo{
-	ID:           20580498,
-	FullName:     "kubernetes/kubernetes",
-	IsFork:       false,
-	RepoURL:      "https://api.github.com/repos/kubernetes/kubernetes",
-	Desc:         "Production-Grade Container Scheduling and Management",
-	LanguagesURL: "https://api.github.com/repos/kubernetes/kubernetes/languages",
-	ContentsURL:  "https://api.github.com/repos/kubernetes/kubernetes/contents/{+path}",
-}
-
-func TestParseLinkHeader(t *testing.T) {
-	testcase := struct {
-		in   string
-		want map[string]string
-	}{
-		"<https://api.github.com/search/repositories?q=language%3Ago&page=2>; rel=\"next\", <https://api.github.com/search/repositories?q=language%3Ago&page=33>; rel=\"last\"",
-		map[string]string{
-			"next": "https://api.github.com/search/repositories?q=language%3Ago&page=2",
-			"last": "https://api.github.com/search/repositories?q=language%3Ago&page=33",
-		},
-	}
-	got := ParseLinkHeader(testcase.in)
-	assert.Equal(t, got, testcase.want, "Should be equal")
-
-}
+// var goRepo = GithubRepo{
+// 	ID:           20580498,
+// 	FullName:     "kubernetes/kubernetes",
+// 	IsFork:       false,
+// 	RepoURL:      "https://api.github.com/repos/kubernetes/kubernetes",
+// 	Desc:         "Production-Grade Container Scheduling and Management",
+// 	LanguagesURL: "https://api.github.com/repos/kubernetes/kubernetes/languages",
+// 	ContentsURL:  "https://api.github.com/repos/kubernetes/kubernetes/contents/{+path}",
+// }
 
 func TestParseGomod(t *testing.T) {
 	want := []GoModule{

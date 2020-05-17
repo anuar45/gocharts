@@ -1,6 +1,8 @@
 package topgomods
 
 import (
+	"errors"
+	"log"
 	"path"
 	"sort"
 	"strings"
@@ -11,7 +13,7 @@ import (
 // Service object for GoImport service
 type GoModuleServicer interface {
 	Fetch() error
-	Repos() ([]GoRepo, error)
+	Repos() (GoRepos, error)
 	TopModules() ([]GoModuleRank, error)
 }
 
@@ -28,7 +30,32 @@ func NewGoModuleService(gr GoRepoRepository, gm GoModuleRepository) *GoModuleSer
 	}
 }
 
-func (g *GoModuleService) Repos() ([]GoRepo, error) {
+func (g *GoModuleService) Fetch() error {
+
+	if g.IsBusy == true {
+		return errors.New("fetch already in progress")
+	}
+
+	go func() {
+		g.IsBusy = true
+		for name, source := range GoRepoSources {
+			goRepos, err := source.Fetch()
+			if err != nil {
+				log.Println("error running fetch from source:", name)
+				continue
+			}
+
+			for _, goRepo := range goRepos {
+				g.GrsRepo.Save(goRepo)
+			}
+		}
+		g.IsBusy = false
+	}()
+
+	return nil
+}
+
+func (g *GoModuleService) Repos() (GoRepos, error) {
 	return g.GrsRepo.FindAll(), nil
 }
 
@@ -37,10 +64,10 @@ func (g *GoModuleService) TopModules() ([]GoModuleRank, error) {
 
 	modulesCount := make(map[string]int)
 
-	repos, _ := g.Repos()
+	goRepos, _ := g.Repos()
 
-	for _, repo := range repos {
-		for _, module := range repo.Modules {
+	for _, goRepo := range goRepos {
+		for _, module := range goRepo.Modules {
 			modulesCount[module.URL]++
 		}
 	}

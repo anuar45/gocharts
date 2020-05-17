@@ -1,14 +1,19 @@
 package main
 
+import (
+	"github.com/anuar45/topgomods"
+	_ "github.com/anuar45/topgomods/source/github"
+)
+
 func main() {
 
-	goRepoDB := NewGoRepoDB()
+	goRepoDB := topgomods.NewGoRepoDB()
 
-	goModuleDB := NewGoModuleDB()
+	goModuleDB := topgomods.NewGoModuleDB()
 
-	goModuleService := NewGoModuleService(goRepoDB, goModuleDB)
+	goModuleService := topgomods.NewGoModuleService(goRepoDB, goModuleDB)
 
-	apiServer := NewApiServer(goModuleService)
+	apiServer := topgomods.NewApiServer(goModuleService)
 
 	apiServer.Run()
 
