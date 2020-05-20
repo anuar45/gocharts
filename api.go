@@ -35,13 +35,14 @@ func (s *ApiServer) ModulesHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(moduleRanks)
 }
 
-func (s *ApiServer) UpdateHandler(w http.ResponseWriter, r *http.Request) {
+func (s *ApiServer) FetchHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 
 		err := s.gmService.Fetch()
 		if err != nil {
 			//fmt.Fprint(w, err)
 			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintln(w, err)
 			return
 		}
 
@@ -57,7 +58,7 @@ func (s *ApiServer) MetaHandler(w http.ResponseWriter, r *http.Request) {
 func (s *ApiServer) Run() {
 
 	http.HandleFunc("/", s.HomeHandler)
-	http.HandleFunc("/api/fetch", s.UpdateHandler)
+	http.HandleFunc("/api/fetch", s.FetchHandler)
 	http.HandleFunc("/api/modules", s.ModulesHandler)
 
 	http.HandleFunc("/api/meta", s.MetaHandler)

@@ -7,4 +7,6 @@ type GoRepoSource interface {
 }
 
 // GoRepoSources collection of GO Repos sources
-var GoRepoSources map[string]GoRepoSource
+var (
+	GoRepoSources = make(map[string]GoRepoSource)
+)

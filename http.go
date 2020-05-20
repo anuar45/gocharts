@@ -4,16 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 
-	"github.com/hashicorp/go-retryablehttp"
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
 
 // HTTPGet makes retryable http get requests using 3rd lib
 func HTTPGet(url, token string) ([]byte, map[string][]string, error) {
 	headers := make(map[string][]string)
 
+	log.Println("quering")
 	client := retryablehttp.NewClient()
 
+	log.Println("quering")
 	req, err := retryablehttp.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cant intitialize request: %w", err)

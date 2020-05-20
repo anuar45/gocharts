@@ -38,7 +38,7 @@ type Github struct {
 }
 
 // Init registers source plugin
-func Init() {
+func init() {
 	topgomods.GoRepoSources["github"] = new(Github)
 }
 
@@ -49,6 +49,8 @@ func (g *Github) Configure(cfg string) error {
 	if g.Token == "" {
 		return errors.New("no github token configured")
 	}
+
+	g.SearchURL = "https://api.github.com/search/repositories?q=language:go"
 	return nil
 }
 
@@ -65,16 +67,19 @@ func (g *Github) fetch() (topgomods.GoRepos, error) {
 	var goRepos topgomods.GoRepos
 	nextURL := g.SearchURL
 
+	log.Println("starting fetch")
+
 	for {
 		var goReposSearch GithubRepoSearch
 
 		content, headers, _ := topgomods.HTTPGet(nextURL, g.Token)
-
+		log.Println("starting fetch")
 		err := json.Unmarshal(content, &goReposSearch)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling: %w", err)
 		}
 
+		log.Println("starting fetch 2")
 		repos := goReposSearch.Repos
 
 		for _, repo := range repos {

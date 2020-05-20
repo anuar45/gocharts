@@ -18,6 +18,7 @@ type GoModuleServicer interface {
 }
 
 type GoModuleService struct {
+	Config  string
 	IsBusy  bool
 	GmsRepo GoModuleRepository
 	GrsRepo GoRepoRepository
@@ -36,12 +37,19 @@ func (g *GoModuleService) Fetch() error {
 		return errors.New("fetch already in progress")
 	}
 
+	log.Println("Starting fetch")
+
 	go func() {
 		g.IsBusy = true
 		for name, source := range GoRepoSources {
+			err := source.Configure(g.Config)
+			if err != nil {
+				log.Println("error configuring plugin:", name, err)
+				continue
+			}
 			goRepos, err := source.Fetch()
 			if err != nil {
-				log.Println("error running fetch from source:", name)
+				log.Println("error running fetch from source:", name, err)
 				continue
 			}
 
