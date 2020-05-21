@@ -4,8 +4,11 @@ import (
 	"log"
 
 	"github.com/anuar45/topgomods"
-	_ "github.com/anuar45/topgomods/source/github"
+	_ "github.com/anuar45/topgomods/sources/github"
 )
+
+// VERSION of app populated on build
+var VERSION string
 
 func main() {
 

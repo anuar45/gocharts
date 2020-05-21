@@ -1,8 +1,10 @@
-package topgomods
+package sources
+
+import "github.com/anuar45/topgomods/model"
 
 // GoRepoSource interface for plugable sources of GO Repos
 type GoRepoSource interface {
-	Fetch() (GoRepos, error)
+	Fetch() (model.GoRepos, error)
 	Configure(string) error
 }
 

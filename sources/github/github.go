@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/anuar45/topgomods"
+	"github.com/anuar45/topgomods/model"
 )
 
 // GithubRepoSearch is search response from github
@@ -55,16 +56,16 @@ func (g *Github) Configure(cfg string) error {
 }
 
 // Fetch source interface implmentation
-func (g *Github) Fetch() (topgomods.GoRepos, error) {
+func (g *Github) Fetch() (model.GoRepos, error) {
 
 	goRepos, err := g.fetch()
 
 	return goRepos, err
 }
 
-func (g *Github) fetch() (topgomods.GoRepos, error) {
+func (g *Github) fetch() (model.GoRepos, error) {
 
-	var goRepos topgomods.GoRepos
+	var goRepos model.GoRepos
 	nextURL := g.SearchURL
 
 	log.Println("starting fetch")
@@ -72,7 +73,7 @@ func (g *Github) fetch() (topgomods.GoRepos, error) {
 	for {
 		var goReposSearch GithubRepoSearch
 
-		content, headers, _ := topgomods.HTTPGet(nextURL, g.Token)
+		content, headers, _ := utils.HTTPGet(nextURL, g.Token)
 		log.Println("starting fetch")
 		err := json.Unmarshal(content, &goReposSearch)
 		if err != nil {
@@ -88,14 +89,14 @@ func (g *Github) fetch() (topgomods.GoRepos, error) {
 
 				gomodURL := strings.Replace(repo.ContentsURL, "{+path}", "go.mod", 1)
 				log.Println("GO mod file url:", gomodURL)
-				gomodContent, _, _ := topgomods.HTTPGet(gomodURL, g.Token)
+				gomodContent, _, _ := utils.HTTPGet(gomodURL, g.Token)
 
-				var goModules []topgomods.GoModule
+				var goModules []model.GoModule
 				if len(gomodContent) > 0 {
-					goModules, _ = topgomods.ParseGomodFile(gomodContent)
+					goModules, _ = model.ParseGomodFile(gomodContent)
 				}
 
-				goRepos = append(goRepos, topgomods.GoRepo{repo.Name, repo.RepoURL, goModules})
+				goRepos = append(goRepos, model.GoRepo{repo.Name, repo.RepoURL, goModules})
 				log.Println("Modules:\n", goModules)
 			}
 		}

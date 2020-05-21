@@ -1,13 +1,11 @@
-package topgomods
+package model
 
 import (
 	"errors"
 	"log"
-	"path"
 	"sort"
-	"strings"
 
-	"golang.org/x/mod/modfile"
+	"github.com/anuar45/topgomods/sources"
 )
 
 // Service object for GoImport service
@@ -41,7 +39,7 @@ func (g *GoModuleService) Fetch() error {
 
 	go func() {
 		g.IsBusy = true
-		for name, source := range GoRepoSources {
+		for name, source := range sources.GoRepoSources {
 			err := source.Configure(g.Config)
 			if err != nil {
 				log.Println("error configuring plugin:", name, err)
@@ -87,22 +85,4 @@ func (g *GoModuleService) TopModules() ([]GoModuleRank, error) {
 	sort.Slice(moduleRanks, func(i, j int) bool { return moduleRanks[i].Count > moduleRanks[j].Count })
 
 	return moduleRanks, nil
-}
-
-// ParseGomodFile get packages from gomod file
-func ParseGomodFile(b []byte) ([]GoModule, error) {
-	var modules []GoModule
-
-	goModFile, err := modfile.Parse("", b, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, req := range goModFile.Require {
-		if !strings.Contains(req.Syntax.Token[0], "golang.org") { //filtering golang std packages
-			modules = append(modules, GoModule{path.Base(req.Syntax.Token[0]), req.Syntax.Token[0]})
-		}
-	}
-
-	return modules, nil
 }
