@@ -1,16 +1,15 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
 
-// HTTPGet makes retryable http get requests using 3rd lib
-func HTTPGet(url, token string) ([]byte, map[string][]string, error) {
-	headers := make(map[string][]string)
+// HTTPGetWithHeaders makes retryable http get requests using 3rd lib
+func HTTPGetWithHeaders(url string, headers map[string]string) ([]byte, map[string][]string, error) {
+	respHeaders := make(map[string][]string)
 
 	//log.Println("quering")
 	client := retryablehttp.NewClient()
@@ -21,11 +20,9 @@ func HTTPGet(url, token string) ([]byte, map[string][]string, error) {
 		return nil, nil, fmt.Errorf("cant intitialize request: %w", err)
 	}
 
-	if token == "" {
-		return nil, nil, errors.New("No github token found")
+	for header, value := range headers {
+		req.Header.Add(header, value)
 	}
-
-	req.Header.Add("Authorization", "token "+token)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -39,7 +36,14 @@ func HTTPGet(url, token string) ([]byte, map[string][]string, error) {
 		return nil, nil, fmt.Errorf("error reading response body: %w", err)
 	}
 
-	headers = resp.Header
+	respHeaders = resp.Header
 
-	return body, headers, nil
+	return body, respHeaders, nil
+}
+
+// HTTPGet wraps HTTPGetWithHeaders
+func HTTPGet(url string) ([]byte, map[string][]string, error) {
+	reqHeaders := make(map[string]string)
+
+	return HTTPGetWithHeaders(url, reqHeaders)
 }

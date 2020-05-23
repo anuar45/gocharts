@@ -1,4 +1,7 @@
 GET http://localhost:8080/api/imports HTTP/1.1
 
 ###
+GET http://localhost:8080/api/meta HTTP/1.1
+
+###
 POST http://localhost:8080/api/fetch HTTP/1.1

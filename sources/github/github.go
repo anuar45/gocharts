@@ -75,7 +75,7 @@ func (g *Github) fetch() (model.GoRepos, error) {
 	for {
 		var goReposSearch GithubRepoSearch
 
-		content, headers, _ := utils.HTTPGet(nextURL, g.Token)
+		content, headers, _ := utils.HTTPGet(nextURL)
 		//l og.Println("starting fetch")
 		err := json.Unmarshal(content, &goReposSearch)
 		if err != nil {
@@ -90,16 +90,21 @@ func (g *Github) fetch() (model.GoRepos, error) {
 				log.Println("Processing:", repo.RepoURL)
 
 				gomodURL := strings.Replace(repo.ContentsURL, "{+path}", "go.mod", 1)
+
 				log.Println("Go mod file url:", gomodURL)
-				gomodContent, _, _ := utils.HTTPGet(gomodURL, g.Token)
+				gomodContent, _, _ := utils.HTTPGetWithHeaders(gomodURL,
+					map[string]string{
+						"Authorization": "Bearer " + g.Token,
+						"Accept":        "application/vnd.github.VERSION.raw",
+					})
 
 				var goModules []model.GoModule
-				log.Println(gomodContent)
+				log.Println(string(gomodContent))
 				if len(gomodContent) > 0 {
-					modules, _ = utils.ParseGomodFile(gomodContent)
+					modules, _ := utils.ParseGomodFile(gomodContent)
 
 					for _, module := range modules {
-						goModules := append(goModules, model.GoModule{path.Base(module), module})
+						goModules = append(goModules, model.GoModule{path.Base(module), module})
 					}
 				}
 
