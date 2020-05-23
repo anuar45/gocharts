@@ -19,7 +19,7 @@ FROM alpine
 RUN apk update && apk add --no-cache ca-certificates
 
 COPY --from=builder /go/bin/topgomods /go/bin/topgomods
-COPY --from=builder /go/src/topgomods/static /go/bin/static/
+COPY --from=builder /go/src/topgomods/web /go/bin/web/
 
 WORKDIR /go/bin
 

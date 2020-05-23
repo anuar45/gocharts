@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 
-	"github.com/anuar45/topgomods"
 	"github.com/anuar45/topgomods/model"
+	"github.com/anuar45/topgomods/sources"
+	"github.com/anuar45/topgomods/utils"
 )
 
 // GithubRepoSearch is search response from github
@@ -40,7 +42,7 @@ type Github struct {
 
 // Init registers source plugin
 func init() {
-	topgomods.GoRepoSources["github"] = new(Github)
+	sources.GoRepoSources["github"] = new(Github)
 }
 
 // Configure configures source plugin
@@ -68,19 +70,19 @@ func (g *Github) fetch() (model.GoRepos, error) {
 	var goRepos model.GoRepos
 	nextURL := g.SearchURL
 
-	log.Println("starting fetch")
+	//l og.Println("starting fetch")
 
 	for {
 		var goReposSearch GithubRepoSearch
 
 		content, headers, _ := utils.HTTPGet(nextURL, g.Token)
-		log.Println("starting fetch")
+		//l og.Println("starting fetch")
 		err := json.Unmarshal(content, &goReposSearch)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling: %w", err)
 		}
 
-		log.Println("starting fetch 2")
+		// log.Println("starting fetch 2")
 		repos := goReposSearch.Repos
 
 		for _, repo := range repos {
@@ -88,12 +90,17 @@ func (g *Github) fetch() (model.GoRepos, error) {
 				log.Println("Processing:", repo.RepoURL)
 
 				gomodURL := strings.Replace(repo.ContentsURL, "{+path}", "go.mod", 1)
-				log.Println("GO mod file url:", gomodURL)
+				log.Println("Go mod file url:", gomodURL)
 				gomodContent, _, _ := utils.HTTPGet(gomodURL, g.Token)
 
 				var goModules []model.GoModule
+				log.Println(gomodContent)
 				if len(gomodContent) > 0 {
-					goModules, _ = model.ParseGomodFile(gomodContent)
+					modules, _ = utils.ParseGomodFile(gomodContent)
+
+					for _, module := range modules {
+						goModules := append(goModules, model.GoModule{path.Base(module), module})
+					}
 				}
 
 				goRepos = append(goRepos, model.GoRepo{repo.Name, repo.RepoURL, goModules})

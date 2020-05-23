@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 
-	"github.com/anuar45/topgomods"
+	"github.com/anuar45/topgomods/api/rest"
+	"github.com/anuar45/topgomods/service"
 	_ "github.com/anuar45/topgomods/sources/github"
+	"github.com/anuar45/topgomods/storage/memdb"
 )
 
 // VERSION of app populated on build
@@ -12,13 +14,13 @@ var VERSION string
 
 func main() {
 
-	goRepoDB := topgomods.NewGoRepoDB()
+	goRepoDB := memdb.NewGoRepoDB()
 
-	goModuleDB := topgomods.NewGoModuleDB()
+	goModuleDB := memdb.NewGoModuleDB()
 
-	goModuleService := topgomods.NewGoModuleService(goRepoDB, goModuleDB)
+	goModuleService := service.NewGoModuleService(goRepoDB, goModuleDB, VERSION)
 
-	apiServer := topgomods.NewApiServer(goModuleService)
+	apiServer := rest.NewApiServer(goModuleService)
 
 	log.Println("Starting server...")
 	apiServer.Run()

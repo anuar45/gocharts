@@ -1,10 +1,9 @@
-package topgomods
+package utils
 
 import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
@@ -13,10 +12,10 @@ import (
 func HTTPGet(url, token string) ([]byte, map[string][]string, error) {
 	headers := make(map[string][]string)
 
-	log.Println("quering")
+	//log.Println("quering")
 	client := retryablehttp.NewClient()
 
-	log.Println("quering")
+	//log.Println("quering")
 	req, err := retryablehttp.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cant intitialize request: %w", err)

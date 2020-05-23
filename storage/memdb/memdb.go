@@ -30,14 +30,14 @@ func NewGoRepoDB() *GoRepoDB {
 	}
 }
 
-func (db GoModuleDB) Save(g GoModule) {
+func (db GoModuleDB) Save(g model.GoModule) {
 	db.mutex.Lock()
 	db.mapdb[g.URL] = g
 	db.mutex.Unlock()
 }
 
-func (db GoModuleDB) FindAll() (model.[]GoModule, error) {
-	var g model.[]GoModule
+func (db GoModuleDB) FindAll() ([]model.GoModule, error) {
+	var g []model.GoModule
 	for _, v := range db.mapdb {
 		g = append(g, v)
 	}
@@ -52,8 +52,8 @@ func (db GoRepoDB) Save(g model.GoRepo) {
 	db.mutex.Unlock()
 }
 
-func (db GoRepoDB) FindAll() model.[]GoRepo {
-	var g model.[]GoRepo
+func (db GoRepoDB) FindAll() []model.GoRepo {
+	var g []model.GoRepo
 	for _, v := range db.mapdb {
 		g = append(g, v)
 	}

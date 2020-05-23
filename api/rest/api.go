@@ -1,4 +1,4 @@
-package topgomods
+package rest
 
 import (
 	"encoding/json"
@@ -6,19 +6,21 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/anuar45/topgomods/service"
 )
 
-func NewApiServer(g GoModuleServicer) *ApiServer {
+func NewApiServer(g service.GoModuleServicer) *ApiServer {
 	return &ApiServer{g}
 }
 
 type ApiServer struct {
-	gmService GoModuleServicer
+	gmService service.GoModuleServicer
 }
 
 func (s *ApiServer) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
-	index, err := ioutil.ReadFile("static/index.html")
+	index, err := ioutil.ReadFile("web/index.html")
 	if err != nil {
 		log.Println("home handler error:", err)
 	}
@@ -52,7 +54,7 @@ func (s *ApiServer) FetchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *ApiServer) MetaHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "{\"version\": \"%s\"}", VERSION)
+	fmt.Fprintf(w, "{\"version\": \"%s\"}", s.gmService.GetVersion())
 }
 
 func (s *ApiServer) Run() {
