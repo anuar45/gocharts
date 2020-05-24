@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
@@ -13,6 +14,9 @@ func HTTPGetWithHeaders(url string, headers map[string]string) ([]byte, map[stri
 
 	//log.Println("quering")
 	client := retryablehttp.NewClient()
+	client.RetryMax = 100
+	client.RetryWaitMin = 5 * time.Second
+	client.RetryWaitMax = 1 * time.Minute
 
 	//log.Println("quering")
 	req, err := retryablehttp.NewRequest("GET", url, nil)

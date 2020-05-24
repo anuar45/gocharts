@@ -99,7 +99,7 @@ func (g *Github) fetch() (model.GoRepos, error) {
 					})
 
 				var goModules []model.GoModule
-				log.Println(string(gomodContent))
+				// log.Println(string(gomodContent))
 				if len(gomodContent) > 0 {
 					modules, _ := utils.ParseGomodFile(gomodContent)
 
@@ -109,7 +109,7 @@ func (g *Github) fetch() (model.GoRepos, error) {
 				}
 
 				goRepos = append(goRepos, model.GoRepo{repo.Name, repo.RepoURL, goModules})
-				log.Println("Modules:\n", goModules)
+				// log.Println("Modules:\n", goModules)
 			}
 		}
 
