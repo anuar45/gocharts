@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"strings"
 
 	"golang.org/x/mod/modfile"
@@ -21,7 +20,7 @@ func ParseGomodFile(b []byte) ([]string, error) {
 			requiredModules = append(requiredModules, req.Syntax.Token[0])
 		}
 	}
-	fmt.Println(goModFile.Require)
+	// fmt.Println(goModFile.Require)
 
 	return requiredModules, nil
 }
