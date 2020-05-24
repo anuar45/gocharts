@@ -75,7 +75,8 @@ func (g *Github) fetch() (model.GoRepos, error) {
 	for {
 		var goReposSearch GithubRepoSearch
 
-		content, headers, _ := utils.HTTPGet(nextURL)
+		content, headers, _ := utils.HTTPGetWithHeaders(nextURL,
+			map[string]string{"Authorization": "Bearer " + g.Token})
 		//l og.Println("starting fetch")
 		err := json.Unmarshal(content, &goReposSearch)
 		if err != nil {
